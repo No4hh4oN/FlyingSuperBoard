@@ -17,7 +17,6 @@
             </div>
         </div>
     </div>
-
     <div class="content">
         <form th:action="@{/member/update}" method="post" id="joinForm" class="form-horizontal">
             <div class="form-group">
@@ -28,7 +27,6 @@
                            class="form-control" th:placeholder="#{MEMBER_ID}" required>
                 </div>
             </div>
-
             <div class="form-group">
                 <label class="control-label col-sm-2" for="password" th:text="#{MEMBER_PW}">MEMBER PASSWORD</label>
                 <div class="col-sm-4">
@@ -37,7 +35,6 @@
                            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}" required>
                 </div>
             </div>
-
             <div class="form-group">
                 <label class="control-label col-sm-2" for="password2" th:text="#{MEMBER_PW_RE}">MEMBER PASSWORD RE</label>
                 <div class="col-sm-4">
@@ -45,7 +42,6 @@
                     <span id="passwordConfirm" th:errors="${member.password2}"></span>
                 </div>
             </div>
-
             <div class="form-group">
                 <label class="control-label col-sm-2" for="name" th:text="#{MEMBER_NAME}">MEMBER NAME</label>
                 <div class="col-sm-4">
@@ -53,7 +49,6 @@
                            autocomplete="off" required th:value="${member.name}">
                 </div>
             </div>
-
             <div class="form-group">
                 <label class="control-label col-sm-2" for="phone" th:text="#{MEMBER_PHONE}">MEMBER PHONE</label>
                 <div class="col-sm-6">
@@ -61,7 +56,6 @@
                            autocomplete="off" required th:value="${member.phone}">
                 </div>
             </div>
-
             <div class="form-group">
                 <label class="control-label col-sm-2" for="email" th:text="#{MEMBER_EMAIL}">MEMBER EMAIL</label>
                 <div class="col-sm-8">
@@ -69,7 +63,6 @@
                            autocomplete="off" required th:value="${member.email}">
                 </div>
             </div>
-
             <div class="form-group">
                 <div class="col-sm-offset-2 col-sm-8">
                     <input type="submit" class="btn btn-info" th:value="#{SAVE}">
@@ -82,12 +75,10 @@
 <footer th:replace="~{/include/footer :: footer}"></footer>
 </body>
 </html>
-
 <script type="text/javascript">
 var pw1 = document.querySelector("#password");
 var pw2 = document.querySelector("#password2");
 var pwConfirm = document.querySelector("#passwordConfirm");
-
 pw2.onkeyup = function(event) {
     if (pw1.value !== pw2.value) {
         pwConfirm.innerText = "비밀번호가 일치하지 않습니다.";
