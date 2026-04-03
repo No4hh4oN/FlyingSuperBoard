@@ -10,9 +10,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import com.example.myapp.member.MemberValidator;
 import com.example.myapp.member.model.Member;
 import com.example.myapp.member.service.IMemberService;
 
@@ -25,9 +28,17 @@ public class MemberController {
 
 	@Autowired
 	IMemberService memberService;
+	
+	@Autowired
+	MemberValidator	memberValidator;
+	
+	@InitBinder
+	private void initBinder(WebDataBinder binder) {
+		binder.setValidator(memberValidator);
+		
+	}
 
-
-	@GetMapping("/member/insert")
+	@GetMapping(value="/member/insert")
 	public String insertMember(HttpSession session, Model model) {
 		String csrfToken = UUID.randomUUID().toString();
 		session.setAttribute("csrfToken", csrfToken);
@@ -77,12 +88,12 @@ public class MemberController {
 
 
 
-	@GetMapping("/member/login")
+	@GetMapping(value="/member/login")
 	public String login() {
 		return "member/login";
 	}
 
-	@PostMapping("/member/login")
+	@PostMapping(value="/member/login")
 	public String login(String userid, String password, HttpSession session, Model model) {
 		Member member = memberService.selectMember(userid);
 		if(member != null) {
@@ -111,7 +122,7 @@ public class MemberController {
 
 
 
-	@GetMapping("/member/update")
+	@GetMapping(value="/member/update")
 	public String updateMember(HttpSession session, Model model) {
 		String userid = (String)session.getAttribute("userid");
 		if(userid != null && !userid.equals("")) {
@@ -146,7 +157,7 @@ public class MemberController {
 		}
 	}
 
-	@GetMapping("/member/delete")
+	@GetMapping(value="/member/delete")
 	public String deleteMember(HttpSession session, Model model) {
 		String userid = (String)session.getAttribute("userid");
 		if(userid != null && !userid.equals("")) {
@@ -160,7 +171,7 @@ public class MemberController {
 		}
 	}
 
-	@PostMapping("/member/delete")
+	@PostMapping(value="/member/delete")
 	public String deleteMember(String password, HttpSession session, Model model) {
 		try {
 			Member member = new Member();
