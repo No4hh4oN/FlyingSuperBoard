@@ -1,11 +1,15 @@
 package com.example.myapp.member.controller;
 
+import java.security.Principal;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -14,6 +18,7 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.myapp.member.MemberValidator;
 import com.example.myapp.member.model.Member;
@@ -34,11 +39,19 @@ public class MemberController {
 	
 	@InitBinder
 	private void initBinder(WebDataBinder binder) {
-		binder.setValidator(memberValidator);
-		
+		binder.setValidator(memberValidator);	
 	}
+	
+	@Autowired
+	PasswordEncoder passwordEncoder;
 
 	@GetMapping(value="/member/insert")
+//	public String insertMember(@Validated Member member, BindingResult result, HttpSession session, Model model) {
+//		String encodedPw = passwordEncoder.encode(member.getPassword());
+//		member.setPassword(encodedPw);
+//		memberService.insertMember(member);
+//	}
+	
 	public String insertMember(HttpSession session, Model model) {
 		String csrfToken = UUID.randomUUID().toString();
 		session.setAttribute("csrfToken", csrfToken);
@@ -46,9 +59,6 @@ public class MemberController {
 		model.addAttribute("member",new Member());
 		return "member/form";
 	}
-
-
-
 
 	@PostMapping(value="/member/insert")
 	public String memberInsert(@Validated Member member, BindingResult result,
@@ -63,13 +73,17 @@ public class MemberController {
 			model.addAttribute("member", member);
 			return "member/form";
 		}
+		
 
-		try {
-			if (!member.getPassword().equals(member.getPassword2())) {
-				model.addAttribute("member", member);
-				model.addAttribute("message", "MEMBER_PW_RE");
-				return "member/form";
-			}
+		if (!member.getPassword().equals(member.getPassword2())) {
+			model.addAttribute("member", member);
+			model.addAttribute("message", "MEMBER_PW_RE");
+			return "member/form";
+		}
+
+		try {	
+			String encodedPw = passwordEncoder.encode(member.getPassword());
+            member.setPassword(encodedPw);
 
 			memberService.insertMember(member);
 
@@ -123,8 +137,9 @@ public class MemberController {
 
 
 	@GetMapping(value="/member/update")
-	public String updateMember(HttpSession session, Model model) {
-		String userid = (String)session.getAttribute("userid");
+	public String updateMember(Model model) {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		String userid = auth.getName();
 		if(userid != null && !userid.equals("")) {
 			Member member = memberService.selectMember(userid);
 			model.addAttribute("member", member);
@@ -137,18 +152,21 @@ public class MemberController {
 	}
 
 	@PostMapping(value="/member/update")
-	public String updateMember(@Validated Member member, BindingResult	result,HttpSession session, Model model) {
+	public String updateMember(@Validated Member member, BindingResult result, Principal principal, Model model) {
+		member.setUserid(principal.getName());
+		
 		if(result.hasErrors())	{
 			model.addAttribute("member",member);
 			return	"member/update";
-
 		}
 
 		try{
+			String encodedPw = passwordEncoder.encode(member.getPassword());
+			member.setPassword(encodedPw);
 			memberService.updateMember(member);
 			model.addAttribute("message", "UPDATED_MEMBER_INFO");
 			model.addAttribute("member", member);
-			session.setAttribute("email", member.getEmail());
+//			session.setAttribute("email", member.getEmail());
 			return "member/login";
 		}catch(Exception e){
 			model.addAttribute("message", e.getMessage());
@@ -158,8 +176,9 @@ public class MemberController {
 	}
 
 	@GetMapping(value="/member/delete")
-	public String deleteMember(HttpSession session, Model model) {
-		String userid = (String)session.getAttribute("userid");
+	public String deleteMember(Principal principal, Model model) {
+		String userid = principal.getName();
+//		String userid = (String)session.getAttribute("userid");
 		if(userid != null && !userid.equals("")) {
 			Member member = memberService.selectMember(userid);
 			model.addAttribute("member", member);
@@ -172,16 +191,17 @@ public class MemberController {
 	}
 
 	@PostMapping(value="/member/delete")
-	public String deleteMember(String password, HttpSession session, Model model) {
+	public String deleteMember(String password, Principal principal, RedirectAttributes model) {
 		try {
 			Member member = new Member();
-			member.setUserid((String)session.getAttribute("userid"));
+			member.setUserid(principal.getName());
+//			member.setUserid((String)session.getAttribute("userid"));
 			String dbpw = memberService.getPassword(member.getUserid());
-			if(password != null && password.equals(dbpw)) {
-				member.setPassword(password);
-				memberService.deleteMember(member) ;
-				session.invalidate(); // 회원정보가 삭제되면 로그아웃 처리
-				return "member/login";
+			if(password != null && passwordEncoder.matches(password, dbpw)) {
+				member.setPassword(dbpw);
+				memberService.deleteMember(member);
+				model.addFlashAttribute("message", "DELETE_USER_INFO");
+				return "redirect:/member/logout";
 			}else {
 				model.addAttribute("message", "WRONG_PASSWORD");
 				return "member/delete";

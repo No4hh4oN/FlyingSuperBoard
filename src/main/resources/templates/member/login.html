@@ -48,7 +48,7 @@
 
         <div sec:authorize="isAuthenticated()">
             <div sec:authentication="name"></div>
-            <div sec:authentication="principal.authorities"></div>
+            <div sec:authentication="principal.userEmail"></div>
             [<a th:href="@{/member/update}" th:text="#{UPDATE_USER_INFO}">UPDATE USER INFO</a>]
             [<a th:href="@{/member/logout}" th:text="#{SIGN_OUT}">SIGN OUT</a>]
             [<a th:href="@{/member/delete}" th:text="#{EXIT_MEMBER}">EXIT MEMBER</a>]
